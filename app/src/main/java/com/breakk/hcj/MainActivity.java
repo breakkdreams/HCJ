@@ -1,10 +1,7 @@
 package com.breakk.hcj;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -18,7 +15,6 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -26,12 +22,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-
 import com.alipay.sdk.app.H5PayCallback;
 import com.alipay.sdk.app.PayTask;
 import com.alipay.sdk.util.H5PayResultModel;
-
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
             //修改为深色，因为我们把状态栏的背景色修改为主题色白色，默认的文字及图标颜色为白色，导致看不到了。
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
-
         setContentView(R.layout.activity_main);
         webView = (WebView) findViewById(R.id.web_view);
         mWebSettings = webView.getSettings();
@@ -89,10 +81,16 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean shouldOverrideUrlLoading(final WebView view, String url) {
-
                 String referer = "http://www.manati.cn";
+                if (url.startsWith("weixin://wap/pay?")) {
+                    Intent intent = new Intent();
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(url));
+                    startActivity(intent);
+                    return true;
+                }
 
-                if (!(url.startsWith("http") || url.startsWith("https") || url.startsWith("https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb"))) {
+                if (!(url.startsWith("http") || url.startsWith("https"))) {
                     return true;
                 }
 
@@ -128,18 +126,11 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 //微信H5支付核心代码
-                if (url.startsWith("weixin://wap/pay?")) {
-                    Intent intent = new Intent();
-                    intent.setAction(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse(url));
-                    startActivity(intent);
-                    return true;
-                } else if(url.startsWith("https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb")) {
-                    Log.e("111",url);
+               if(url.startsWith("https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb")) {
                     Map<String, String> extraHeaders = new HashMap<>();
                     extraHeaders.put("Referer", referer);
                     view.loadUrl(url, extraHeaders);
-                }else{
+                }else if (!isIntercepted) {
                     view.loadUrl(url);
                 }
                 return true;
@@ -152,13 +143,24 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
-                Log.e("0000",url);
+                if(url.contains("/#/Home")){
+                    StatusBarUtil.setDrawable(MainActivity.this, R.drawable.gradient_status_home);
+                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                }else if(url.contains("/#/Profile")){
+                    StatusBarUtil.setDrawable(MainActivity.this, R.drawable.gradient_status_personal);
+                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                }else if(url.contains("/#/Wallet")){
+                    StatusBarUtil.setDrawable(MainActivity.this, R.drawable.gradient_status_wallet);
+                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                }else{
+                    StatusBarUtil.setDrawable(MainActivity.this, R.drawable.gradient_status_bg);
+                    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                }
                 super.onPageFinished(view, url);
             }
-
         });
-        webView.setWebChromeClient(new WebChromeClient() {
 
+        webView.setWebChromeClient(new WebChromeClient() {
             /**
              * API >= 21(Android 5.0.1)回调此方法
              */
@@ -169,7 +171,6 @@ public class MainActivity extends AppCompatActivity {
                 takePhoto();
                 return true;
             }
-
             public void openFileChooser(ValueCallback<Uri> uploadMsg) {
                 mUploadCallbackBelow=uploadMsg;
                 takePhoto();
@@ -183,10 +184,9 @@ public class MainActivity extends AppCompatActivity {
                 takePhoto();
             }
         });
-
         webView.loadUrl("http://www.manati.cn/public/themes/simpleboot3/hcj");
-
     }
+
 
 
     @Override
@@ -228,6 +228,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
 
     /**
      * Android API < 21(Android 5.0)版本的回调处理
@@ -296,7 +297,6 @@ public class MainActivity extends AppCompatActivity {
         intent.setData(imageUri);
         sendBroadcast(intent);
     }
-
 
     /**
      * 调用相机
