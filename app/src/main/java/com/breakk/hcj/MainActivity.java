@@ -216,7 +216,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Log.e("WangJCode11", resultCode+"");
         if (requestCode == REQUEST_CODE) {
             // 经过上边(1)、(2)两个赋值操作，此处即可根据其值是否为空来决定采用哪种处理方法
             if (mUploadCallbackBelow != null) {
@@ -236,21 +235,18 @@ public class MainActivity extends AppCompatActivity {
      * @param data 选取文件或拍照的返回结果
      */
     private void chooseBelow(int resultCode, Intent data) {
-        Log.e("WangJ", "返回调用方法--chooseBelow");
         if (RESULT_OK == resultCode) {
             updatePhotos();
             if (data != null) {
                 // 这里是针对文件路径处理
                 Uri uri = data.getData();
                 if (uri != null) {
-                    Log.e("WangJ", "系统返回URI：" + uri.toString());
                     mUploadCallbackBelow.onReceiveValue(uri);
                 } else {
                     mUploadCallbackBelow.onReceiveValue(null);
                 }
             } else {
                 // 以指定图像存储路径的方式调起相机，成功后返回data为空
-                Log.e("WangJ", "自定义结果：" + imageUri.toString());
                 mUploadCallbackBelow.onReceiveValue(imageUri);
             }
         } else {
@@ -265,7 +261,6 @@ public class MainActivity extends AppCompatActivity {
      * @param data 选取文件或拍照的返回结果
      */
     private void chooseAbove(int resultCode, Intent data) {
-        Log.e("WangJ", "返回调用方法--chooseAbove");
         if (RESULT_OK == resultCode) {
             updatePhotos();
             if (data != null) {
@@ -274,15 +269,11 @@ public class MainActivity extends AppCompatActivity {
                 Uri uriData = data.getData();
                 if (uriData != null) {
                     results = new Uri[]{uriData};
-                    for (Uri uri : results) {
-                        Log.e("WangJ", "系统返回URI：" + uri.toString());
-                    }
                     mUploadCallbackAboveL.onReceiveValue(results);
                 } else {
                     mUploadCallbackAboveL.onReceiveValue(null);
                 }
             } else {
-                Log.e("WangJ", "自定义结果：" + imageUri.toString());
                 mUploadCallbackAboveL.onReceiveValue(new Uri[]{imageUri});
             }
         } else {
